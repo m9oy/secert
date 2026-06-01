@@ -7,11 +7,7 @@ export default defineConfig({
   base: "/",
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
+    alias: { "@": path.resolve(__dirname, "src") },
   },
-  build: {
-    outDir: "dist",
-  },
+  build: { outDir: "dist" },
 });
