@@ -1,13 +1,9 @@
 {
-  "buildCommand": "NODE_ENV=production BASE_PATH=/ pnpm --filter @workspace/desv-addons run build",
-  "outputDirectory": "artifacts/desv-addons/dist/public",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "env": {
-    "PORT": "3000",
-    "BASE_PATH": "/"
-  }
+  ]
 }
