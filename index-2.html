@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pr7 Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --black: #111111;
+    --white: #ffffff;
+    --gray-50:  #f9f9f9;
+    --gray-100: #f2f2f2;
+    --gray-200: #e5e5e5;
+    --gray-300: #d0d0d0;
+    --gray-400: #aaaaaa;
+    --gray-500: #777777;
+    --gray-600: #555555;
+    --gray-700: #333333;
+    --success: #22c55e;
+    --danger:  #ef4444;
+    --warning: #f59e0b;
+    --nav-h: 64px;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.11);
+    --t: 0.18s ease;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family:'Cairo',sans-serif;
+    background:var(--gray-50);
+    color:var(--black);
+    direction:rtl;
+    padding-bottom:var(--nav-h);
+  }
+  a { text-decoration:none; color:inherit; }
+  button { cursor:pointer; font-family:'Cairo',sans-serif; border:none; background:transparent; }
+  input,textarea,select { font-family:'Cairo',sans-serif; }
+  img { display:block; }
+
+  /* ──────────── LOADER ──────────── */
+  #loader {
+    position:fixed; inset:0; background:#fff; z-index:9999;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px;
+    transition:opacity .35s;
+  }
+  .loader-logo { font-size:1.8rem; font-weight:900; color:var(--black); letter-spacing:.5px; }
+  .loader-sub { font-size:.85rem; color:var(--gray-400); font-weight:500; }
+  .loader-dots { display:flex; gap:6px; }
+  .loader-dots span {
+    width:8px; height:8px; border-radius:50%; background:var(--black);
+    animation:dotPulse 1.2s infinite ease-in-out both;
+  }
+  .loader-dots span:nth-child(2){animation-delay:.2s}
+  .loader-dots span:nth-child(3){animation-delay:.4s}
+  @keyframes dotPulse{0%,80%,100%{transform:scale(0);opacity:.3}40%{transform:scale(1);opacity:1}}
+
+  /* ──────────── TOP BAR ──────────── */
+  #topbar {
+    background:var(--white);
+    border-bottom:1px solid var(--gray-200);
+    position:sticky; top:0; z-index:100;
+  }
+  .topbar-inner {
+    max-width:700px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px;
+  }
+  .topbar-title { font-size:1.15rem; font-weight:800; letter-spacing:.2px; }
+  .topbar-search {
+    flex:1; max-width:240px; margin-right:12px;
+    display:flex; align-items:center; gap:7px;
+    background:var(--gray-100); border-radius:24px;
+    padding:8px 14px;
+  }
+  .topbar-search input {
+    border:none; background:transparent; outline:none;
+    font-size:.85rem; color:var(--black); width:100%;
+  }
+  .topbar-search input::placeholder { color:var(--gray-400); }
+  .topbar-search i { color:var(--gray-400); font-size:.85rem; flex-shrink:0; }
+  .topbar-cart-btn {
+    position:relative; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%; background:var(--gray-100); color:var(--black);
+    font-size:1rem; transition:var(--t);
+  }
+  .topbar-cart-btn:hover { background:var(--gray-200); }
+  .cart-badge {
+    position:absolute; top:-4px; right:-4px;
+    background:var(--black); color:#fff;
+    font-size:.6rem; font-weight:800;
+    width:17px; height:17px; border-radius:50%;
+    display:none; align-items:center; justify-content:center;
+    border:2px solid #fff;
+  }
+
+  /* ──────────── BOTTOM NAV ──────────── */
+  #bottom-nav {
+    position:fixed; bottom:0; left:0; right:0; z-index:100;
+    background:var(--white);
+    border-top:1px solid var(--gray-200);
+    height:var(--nav-h);
+    display:flex; align-items:stretch;
+    max-width:700px; margin:0 auto;
+    left:50%; transform:translateX(-50%);
+    width:100%;
+  }
+  .bnav-item {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:4px;
+    color:var(--gray-400); font-size:.72rem; font-weight:600;
+    transition:var(--t); padding:8px 0;
+  }
+  .bnav-item i { font-size:1.25rem; transition:var(--t); }
+  .bnav-item.active { color:var(--black); }
+  .bnav-item.active i { transform:translateY(-1px); }
+
+  /* ──────────── PAGES ──────────── */
+  .page { display:none; min-height:calc(100vh - var(--nav-h)); }
+  .page.active { display:block; }
+  .page-inner { max-width:700px; margin:0 auto; padding:0 16px 32px; }
+
+  /* ──────────── BANNER ──────────── */
+  .banner-wrap {
+    max-width:700px; margin:0 auto;
+    border-radius:0 0 var(--radius) var(--radius); overflow:hidden;
+  }
+  .banner-wrap img { width:100%; object-fit:cover; max-height:200px; display:block; }
+  .banner-placeholder {
+    width:100%; height:160px; background:var(--gray-200);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--gray-400); font-size:.9rem;
+  }
+
+  /* ──────────── SECTION TITLE ──────────── */
+  .sec-title {
+    font-size:1rem; font-weight:800; color:var(--black);
+    margin:20px 0 12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .sec-title::before {
+    content:''; width:3px; height:18px; background:var(--black);
+    border-radius:2px; display:block;
+  }
+
+  /* ──────────── PRODUCT GRID ──────────── */
+  .products-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+  @media(min-width:520px){ .products-grid{ grid-template-columns:repeat(3,1fr); } }
+  @media(min-width:680px){ .products-grid{ grid-template-columns:repeat(3,1fr); } }
+
+  .product-card {
+    background:var(--white); border-radius:var(--radius);
+    border:1px solid var(--gray-200);
+    overflow:hidden; transition:all .22s;
+    display:flex; flex-direction:column; cursor:pointer;
+  }
+  .product-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+  .product-img-wrap { aspect-ratio:1; overflow:hidden; background:var(--gray-100); position:relative; }
+  .product-img-wrap img { width:100%; height:100%; object-fit:cover; transition:transform .3s; }
+  .product-card:hover .product-img-wrap img { transform:scale(1.05); }
+  .prod-cat-badge {
+    position:absolute; top:8px; right:8px;
+    background:var(--black); color:#fff;
+    font-size:.65rem; font-weight:700; padding:2px 8px; border-radius:20px;
+  }
+  .product-body { padding:12px; flex:1; display:flex; flex-direction:column; gap:6px; }
+  .product-name { font-size:.9rem; font-weight:700; line-height:1.35; color:var(--black); }
+  .product-desc { font-size:.75rem; color:var(--gray-500); line-height:1.5; flex:1; }
+  .product-price { font-size:1rem; font-weight:800; color:var(--black); }
+  .product-price small { font-size:.72rem; font-weight:500; color:var(--gray-400); margin-right:2px; }
+  .product-footer { display:flex; gap:8px; margin-top:4px; }
+  .btn-view {
+    flex:1; background:var(--black); color:#fff;
+    padding:9px 0; border-radius:24px; font-size:.8rem; font-weight:700;
+    transition:var(--t); border:none;
+  }
+  .btn-view:hover { background:#333; }
+  .btn-cart-sm {
+    width:36px; height:36px; border-radius:50%;
+    border:1.5px solid var(--gray-300); color:var(--gray-500);
+    display:flex; align-items:center; justify-content:center; font-size:.85rem;
+    transition:var(--t); flex-shrink:0;
+  }
+  .btn-cart-sm:hover { border-color:var(--black); color:var(--black); }
+
+  /* ──────────── SEARCH EMPTY ──────────── */
+  .empty-state {
+    text-align:center; padding:50px 20px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .empty-icon {
+    width:72px; height:72px; border-radius:50%; background:var(--gray-100);
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; color:var(--gray-300);
+  }
+  .empty-state p { color:var(--gray-500); font-size:.9rem; }
+
+  /* ──────────── PRODUCT DETAIL ──────────── */
+  #page-product { background:var(--white); }
+  .detail-back {
+    display:flex; align-items:center; gap:8px;
+    padding:14px 16px; font-size:.9rem; font-weight:600; color:var(--gray-600);
+    max-width:700px; margin:0 auto;
+  }
+  .detail-back i { font-size:1rem; }
+  .detail-img { width:100%; max-width:700px; margin:0 auto; aspect-ratio:1; background:var(--gray-100); overflow:hidden; }
+  .detail-img img { width:100%; height:100%; object-fit:cover; }
+  .detail-body { max-width:700px; margin:0 auto; padding:20px 16px 32px; }
+  .detail-cat { display:inline-block; background:var(--gray-100); color:var(--gray-600); font-size:.75rem; font-weight:700; padding:4px 12px; border-radius:20px; margin-bottom:10px; }
+  .detail-name { font-size:1.35rem; font-weight:800; margin-bottom:6px; }
+  .detail-price { font-size:1.6rem; font-weight:900; margin-bottom:14px; }
+  .detail-price small { font-size:.9rem; font-weight:500; color:var(--gray-400); }
+  .detail-desc { font-size:.9rem; color:var(--gray-500); line-height:1.75; margin-bottom:20px; }
+  .detail-stock { font-size:.82rem; color:var(--gray-500); margin-bottom:18px; display:flex; align-items:center; gap:6px; }
+  .qty-row { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .qty-label { font-size:.9rem; font-weight:600; }
+  .qty-ctrl { display:flex; align-items:center; gap:0; border:1.5px solid var(--gray-200); border-radius:24px; overflow:hidden; }
+  .qty-btn {
+    width:38px; height:38px; background:transparent;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1rem; color:var(--black); transition:var(--t);
+  }
+  .qty-btn:hover { background:var(--gray-100); }
+  .qty-val { width:36px; text-align:center; font-weight:700; font-size:.95rem; }
+  .btn-add-cart-full {
+    width:100%; background:var(--black); color:#fff; border:none;
+    padding:15px; border-radius:28px; font-size:1rem; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:var(--t);
+  }
+  .btn-add-cart-full:hover { background:#333; }
+
+  /* ──────────── REVIEWS ──────────── */
+  .reviews-section { background:var(--white); padding:20px 16px; max-width:700px; margin:0 auto; }
+  .review-form { background:var(--gray-50); border-radius:var(--radius); padding:16px; margin-bottom:20px; }
+  .star-picker { display:flex; gap:6px; margin-bottom:10px; }
+  .star-picker i { font-size:1.4rem; color:var(--gray-300); cursor:pointer; transition:var(--t); }
+  .star-picker i.lit { color:var(--warning); }
+  .review-textarea {
+    width:100%; border:1.5px solid var(--gray-200); border-radius:var(--radius-sm);
+    padding:11px 13px; font-size:.88rem; resize:none; outline:none; transition:var(--t);
+    background:var(--white);
+  }
+  .review-textarea:focus { border-color:var(--black); }
+  .btn-post-review {
+    margin-top:10px; background:var(--black); color:#fff; border:none;
+    padding:10px 22px; border-radius:24px; font-size:.85rem; font-weight:700; transition:var(--t);
+  }
+  .btn-post-review:hover { background:#333; }
+  .review-item { display:flex; gap:11px; padding:14px 0; border-bottom:1px solid var(--gray-100); }
+  .review-item:last-child { border-bottom:none; }
+  .rev-avatar {
+    width:38px; height:38px; border-radius:50%; background:var(--black);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:.9rem; flex-shrink:0;
+  }
+  .rev-body { flex:1; }
+  .rev-meta { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+  .rev-name { font-weight:700; font-size:.88rem; }
+  .rev-date { font-size:.74rem; color:var(--gray-400); }
+  .rev-stars { display:flex; gap:2px; }
+  .rev-stars i { font-size:.75rem; color:var(--warning); }
+  .rev-stars i.empty { color:var(--gray-200); }
+  .rev-text { font-size:.87rem; color:var(--gray-600); line-height:1.6; }
+
+  /* ──────────── CART ──────────── */
+  #page-cart { background:var(--gray-50); }
+  .cart-wrap { max-width:700px; margin:0 auto; padding:16px; }
+  .cart-item-card {
+    background:var(--white); border-radius:var(--radius);
+    border:1px solid var(--gray-200); padding:14px;
+    display:flex; gap:13px; align-items:center; margin-bottom:10px;
+  }
+  .ci-img { width:70px; height:70px; border-radius:var(--radius-sm); object-fit:cover; background:var(--gray-100); flex-shrink:0; }
+  .ci-info { flex:1; }
+  .ci-name { font-weight:700; font-size:.9rem; margin-bottom:4px; }
+  .ci-price { font-size:.82rem; color:var(--gray-500); }
+  .ci-controls { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .ci-qty-btn {
+    width:30px; height:30px; border-radius:50%; border:1.5px solid var(--gray-200);
+    display:flex; align-items:center; justify-content:center; font-size:.9rem; transition:var(--t);
+  }
+  .ci-qty-btn:hover { background:var(--gray-100); }
+  .ci-qty-val { font-weight:700; min-width:20px; text-align:center; font-size:.9rem; }
+  .ci-remove { color:var(--gray-400); font-size:.95rem; padding:6px; border-radius:6px; transition:var(--t); }
+  .ci-remove:hover { color:var(--danger); background:#fee2e2; }
+  .order-box {
+    background:var(--white); border-radius:var(--radius);
+    border:1px solid var(--gray-200); padding:20px; margin-top:6px;
+  }
+  .order-box-title { font-size:1rem; font-weight:800; margin-bottom:16px; }
+  .sum-row { display:flex; justify-content:space-between; padding:7px 0; font-size:.9rem; }
+  .sum-row.total { border-top:1px solid var(--gray-200); margin-top:6px; padding-top:13px; font-weight:800; font-size:1rem; }
+  .coupon-row { display:flex; gap:8px; margin:14px 0 8px; }
+  .coupon-field {
+    flex:1; border:1.5px solid var(--gray-200); border-radius:24px;
+    padding:9px 16px; font-size:.85rem; outline:none; transition:var(--t);
+  }
+  .coupon-field:focus { border-color:var(--black); }
+  .coupon-apply {
+    background:var(--black); color:#fff; padding:9px 18px;
+    border-radius:24px; font-size:.85rem; font-weight:700; transition:var(--t);
+  }
+  .coupon-apply:hover { background:#333; }
+  .coupon-ok { font-size:.8rem; color:var(--success); font-weight:600; display:none; }
+  .coupon-ok.show { display:block; margin-bottom:8px; }
+  .btn-checkout-full {
+    width:100%; background:var(--black); color:#fff;
+    padding:14px; border-radius:28px; font-size:.95rem; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:16px; transition:var(--t);
+  }
+  .btn-checkout-full:hover { background:#333; }
+
+  /* ──────────── ACCOUNT ──────────── */
+  #page-account { background:var(--white); }
+  .account-inner { max-width:700px; margin:0 auto; padding:0 16px 40px; }
+
+  /* guest state */
+  .guest-hero {
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center; padding:52px 20px 36px;
+    gap:16px;
+  }
+  .guest-icon {
+    width:88px; height:88px; border-radius:50%; background:var(--gray-100);
+    display:flex; align-items:center; justify-content:center;
+    font-size:2rem; color:var(--gray-400);
+  }
+  .guest-title { font-size:1.35rem; font-weight:800; }
+  .guest-sub { font-size:.9rem; color:var(--gray-500); line-height:1.6; max-width:280px; }
+  .btn-auth-main {
+    background:var(--black); color:#fff; width:100%; max-width:340px;
+    padding:15px; border-radius:28px; font-size:1rem; font-weight:800;
+    transition:var(--t); display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-auth-main:hover { background:#333; }
+
+  /* auth forms */
+  .auth-sheet {
+    background:var(--white); border-radius:var(--radius) var(--radius) 0 0;
+    padding:28px 20px 40px;
+    animation:slideUp .25s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .auth-sheet-title { font-size:1.1rem; font-weight:800; margin-bottom:18px; }
+  .auth-form { display:flex; flex-direction:column; gap:11px; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-label { font-size:.8rem; font-weight:700; color:var(--gray-600); }
+  .form-input {
+    border:1.5px solid var(--gray-200); border-radius:var(--radius-sm);
+    padding:11px 14px; font-size:.9rem; outline:none; transition:var(--t); background:var(--gray-50);
+  }
+  .form-input:focus { border-color:var(--black); background:var(--white); }
+  .btn-form-submit {
+    background:var(--black); color:#fff;
+    padding:13px; border-radius:28px; font-size:.95rem; font-weight:800;
+    margin-top:6px; transition:var(--t);
+  }
+  .btn-form-submit:hover { background:#333; }
+  .btn-google-auth {
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    border:1.5px solid var(--gray-200); background:var(--white); color:var(--black);
+    padding:12px; border-radius:28px; font-size:.9rem; font-weight:700; transition:var(--t);
+  }
+  .btn-google-auth:hover { background:var(--gray-50); }
+  .auth-divider { display:flex; align-items:center; gap:10px; }
+  .auth-divider::before,.auth-divider::after { content:''; flex:1; height:1px; background:var(--gray-200); }
+  .auth-divider span { font-size:.78rem; color:var(--gray-400); }
+  .auth-switch { text-align:center; font-size:.83rem; color:var(--gray-500); }
+  .auth-switch a { color:var(--black); font-weight:700; cursor:pointer; }
+
+  /* logged-in profile */
+  .profile-card {
+    background:var(--white); padding:40px 20px 28px;
+    display:flex; flex-direction:column; align-items:center; text-align:center; gap:12px;
+  }
+  .profile-avatar-lg {
+    width:80px; height:80px; border-radius:50%; background:var(--black);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:2rem; font-weight:800;
+  }
+  .profile-name { font-size:1.2rem; font-weight:800; }
+  .profile-email { font-size:.85rem; color:var(--gray-500); }
+  .admin-badge {
+    background:var(--black); color:#fff; font-size:.72rem; font-weight:700;
+    padding:3px 12px; border-radius:20px; display:inline-flex; align-items:center; gap:5px;
+  }
+  .profile-menu { width:100%; max-width:480px; margin-top:8px; }
+  .profile-menu-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:15px 0; border-bottom:1px solid var(--gray-100);
+    font-size:.92rem; font-weight:600;
+  }
+  .profile-menu-item:last-child { border-bottom:none; }
+  .profile-menu-item i { color:var(--gray-400); }
+  .btn-signout {
+    margin-top:24px; border:1.5px solid var(--gray-200); color:var(--gray-600);
+    padding:12px 32px; border-radius:28px; font-size:.9rem; font-weight:700;
+    transition:var(--t); display:flex; align-items:center; gap:8px;
+  }
+  .btn-signout:hover { background:var(--gray-50); }
+
+  /* ──────────── SETTINGS ──────────── */
+  #page-settings { background:var(--gray-50); }
+  .settings-wrap { max-width:700px; margin:0 auto; padding:16px; }
+  .settings-section-title { font-size:.78rem; font-weight:700; color:var(--gray-400); padding:8px 4px 8px; text-transform:uppercase; letter-spacing:.5px; }
+  .settings-card {
+    background:var(--white); border-radius:var(--radius);
+    border:1px solid var(--gray-200); overflow:hidden; margin-bottom:14px;
+  }
+  .settings-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 16px; border-bottom:1px solid var(--gray-100);
+    font-size:.9rem;
+  }
+  .settings-row:last-child { border-bottom:none; }
+  .settings-row-label { font-weight:600; }
+  .settings-row-val { color:var(--gray-500); font-size:.85rem; }
+
+  /* ──────────── ADMIN ──────────── */
+  #page-admin { background:var(--gray-50); }
+  .admin-wrap { max-width:700px; margin:0 auto; padding:16px; }
+  .admin-tabs { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; margin-bottom:16px; }
+  .admin-tabs::-webkit-scrollbar { display:none; }
+  .atab {
+    background:var(--white); border:1.5px solid var(--gray-200);
+    color:var(--gray-600); padding:9px 18px; border-radius:24px;
+    font-size:.82rem; font-weight:700; transition:var(--t); white-space:nowrap;
+  }
+  .atab.active { background:var(--black); color:#fff; border-color:var(--black); }
+  .admin-panel { display:none; }
+  .admin-panel.active { display:block; }
+  .form-card {
+    background:var(--white); border-radius:var(--radius);
+    border:1px solid var(--gray-200); padding:20px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .form-card h3 { font-size:.95rem; font-weight:800; margin-bottom:2px; }
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media(max-width:420px){ .form-grid{ grid-template-columns:1fr; } }
+  .form-select {
+    border:1.5px solid var(--gray-200); border-radius:var(--radius-sm);
+    padding:11px 14px; font-size:.9rem; outline:none; transition:var(--t); background:var(--gray-50);
+  }
+  .form-select:focus { border-color:var(--black); }
+  .form-textarea {
+    border:1.5px solid var(--gray-200); border-radius:var(--radius-sm);
+    padding:11px 14px; font-size:.9rem; outline:none; resize:none; transition:var(--t); background:var(--gray-50);
+  }
+  .form-textarea:focus { border-color:var(--black); }
+  .btn-add-item {
+    background:var(--black); color:#fff; padding:12px 26px;
+    border-radius:24px; font-size:.88rem; font-weight:800;
+    display:inline-flex; align-items:center; gap:7px; transition:var(--t);
+  }
+  .btn-add-item:hover { background:#333; }
+  .data-table-wrap { background:var(--white); border-radius:var(--radius); border:1px solid var(--gray-200); overflow:auto; margin-top:14px; }
+  table { width:100%; border-collapse:collapse; min-width:540px; }
+  th { background:var(--gray-50); padding:11px 12px; text-align:right; font-size:.78rem; font-weight:700; color:var(--gray-600); border-bottom:1px solid var(--gray-200); }
+  td { padding:11px 12px; border-bottom:1px solid var(--gray-100); font-size:.83rem; vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--gray-50); }
+  .tbl-img { width:40px; height:40px; border-radius:6px; object-fit:cover; }
+  .btn-tbl { padding:5px 11px; border-radius:6px; font-size:.75rem; font-weight:700; cursor:pointer; border:none; transition:var(--t); }
+  .btn-del { background:#fee2e2; color:var(--danger); }
+  .btn-del:hover { background:var(--danger); color:#fff; }
+  .btn-edt { background:var(--gray-100); color:var(--gray-700); }
+  .btn-edt:hover { background:var(--gray-200); }
+
+  /* ──────────── STATUS BADGES ──────────── */
+  .sbadge { padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; display:inline-block; white-space:nowrap; }
+  .sb-new       { background:#e0f2fe; color:#0277bd; }
+  .sb-pending   { background:#fff8e1; color:#f57c00; }
+  .sb-paid      { background:#e8f5e9; color:#2e7d32; }
+  .sb-completed { background:#f3e5f5; color:#7b1fa2; }
+  .sb-cancelled { background:#ffebee; color:#c62828; }
+  .sb-active    { background:#e8f5e9; color:#2e7d32; }
+  .sb-inactive  { background:#ffebee; color:#c62828; }
+
+  /* ──────────── FOOTER ──────────── */
+  .site-footer {
+    background:var(--gray-100); border-top:1px solid var(--gray-200);
+    padding:28px 16px 20px; margin-top:24px;
+    max-width:700px; margin-left:auto; margin-right:auto;
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .footer-brand { text-align:center; margin-bottom:20px; }
+  .footer-brand h3 { font-size:1.1rem; font-weight:900; margin-bottom:4px; }
+  .footer-brand p { font-size:.83rem; color:var(--gray-500); }
+  .footer-social { display:flex; justify-content:center; gap:28px; margin:18px 0; }
+  .footer-slink { display:flex; flex-direction:column; align-items:center; gap:5px; color:var(--gray-700); font-size:.72rem; font-weight:600; }
+  .footer-slink i { font-size:1.3rem; }
+  .footer-slink:hover { color:var(--black); }
+  .footer-note { text-align:center; font-size:.78rem; color:var(--gray-500); line-height:1.6; margin-bottom:12px; padding:0 10px; }
+  .footer-copy { text-align:center; font-size:.74rem; color:var(--gray-400); }
+
+  /* ──────────── TOAST ──────────── */
+  #toast-wrap { position:fixed; bottom:calc(var(--nav-h) + 12px); left:16px; right:16px; z-index:9999; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
+  .toast {
+    background:var(--black); color:#fff;
+    padding:12px 20px; border-radius:24px;
+    font-size:.88rem; font-weight:600; max-width:340px; width:100%;
+    text-align:center; box-shadow:var(--shadow-md);
+    animation:toastIn .25s ease;
+  }
+  .toast.ok { background:#16a34a; }
+  .toast.err { background:#dc2626; }
+  @keyframes toastIn { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+  /* ──────────── MODAL ──────────── */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:500;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-sheet {
+    background:var(--white); border-radius:var(--radius) var(--radius) 0 0;
+    padding:24px 20px 40px; width:100%; max-width:700px;
+    max-height:88vh; overflow-y:auto;
+    animation:slideUp .25s ease;
+  }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .modal-title { font-size:1.05rem; font-weight:800; }
+  .modal-close-btn { width:32px; height:32px; border-radius:50%; background:var(--gray-100); color:var(--gray-600); display:flex; align-items:center; justify-content:center; font-size:.9rem; transition:var(--t); }
+  .modal-close-btn:hover { background:var(--gray-200); }
+
+  /* invoice modal */
+  .invoice-success-icon { text-align:center; margin-bottom:16px; }
+  .invoice-success-icon i { font-size:2.8rem; color:var(--success); }
+  .invoice-box {
+    background:var(--gray-100); border-radius:var(--radius-sm); padding:16px; margin:12px 0;
+  }
+  .inv-label { font-size:.75rem; color:var(--gray-500); margin-bottom:3px; }
+  .inv-val { font-size:.88rem; font-weight:800; word-break:break-all; font-family:monospace; }
+  .inv-sep { height:1px; background:var(--gray-200); margin:12px 0; }
+  .btn-wa {
+    width:100%; background:#25D366; color:#fff;
+    padding:14px; border-radius:28px; font-size:.95rem; font-weight:800;
+    display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px; transition:var(--t);
+  }
+  .btn-wa:hover { background:#1da851; }
+
+  /* edit modal */
+  .edit-form { display:flex; flex-direction:column; gap:11px; }
+
+  /* ──────────── COMMENTS (HOME) ──────────── */
+  .home-comments { max-width:700px; margin:0 auto 16px; }
+  .comment-form-card { background:var(--white); border-radius:var(--radius); border:1px solid var(--gray-200); padding:16px; margin-bottom:12px; }
+  .comment-textarea {
+    width:100%; border:1.5px solid var(--gray-200); border-radius:var(--radius-sm);
+    padding:11px 13px; font-size:.88rem; resize:none; outline:none; transition:var(--t); background:var(--gray-50);
+  }
+  .comment-textarea:focus { border-color:var(--black); }
+  .btn-post-comment {
+    margin-top:10px; background:var(--black); color:#fff;
+    padding:9px 20px; border-radius:24px; font-size:.83rem; font-weight:700; transition:var(--t);
+  }
+  .btn-post-comment:hover { background:#333; }
+  .comment-card { background:var(--white); border-radius:var(--radius); border:1px solid var(--gray-200); padding:14px 16px; margin-bottom:10px; display:flex; gap:12px; }
+  .comment-avatar { width:36px; height:36px; border-radius:50%; background:var(--black); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.85rem; flex-shrink:0; }
+  .comment-body-wrap { flex:1; }
+  .comment-meta { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .comment-author { font-weight:700; font-size:.87rem; }
+  .comment-date { font-size:.74rem; color:var(--gray-400); }
+  .comment-text { font-size:.87rem; color:var(--gray-600); line-height:1.6; }
+
+  /* ──────────── SKELETON ──────────── */
+  .skel { background:linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:var(--radius-sm); }
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .skel-card { border-radius:var(--radius); overflow:hidden; height:280px; }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">Pr7 Store</div>
+  <div class="loader-sub">متجر فلوس GTA الموثوق</div>
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-title" id="topbar-title">Pr7 Store</div>
+    <div class="topbar-search" id="topbar-search-wrap">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="ابحث عن منتج..." oninput="handleSearch()">
+    </div>
+    <button class="topbar-cart-btn" onclick="nav('cart')">
+      <i class="fas fa-shopping-bag"></i>
+      <span class="cart-badge" id="cart-badge">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════ HOME ════════════ -->
+<div id="page-home" class="page active">
+  <!-- Banner -->
+  <div class="banner-wrap">
+    <img src="https://cdn.discordapp.com/attachments/1510656533762146414/1511383594973659299/wheat2_20260602171917.png"
+         alt="Pr7 Store" id="banner-img"
+         onerror="this.parentElement.innerHTML='<div class=banner-placeholder><i class=fas fa-store style=font-size:2rem;margin-left:10px></i>Pr7 Store</div>'">
+  </div>
+
+  <div class="page-inner">
+    <div class="sec-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span style="width:3px;height:18px;background:#111;border-radius:2px;display:block"></span>
+        المنتجات
+      </span>
+      <span id="search-count" style="font-size:.8rem;color:#aaa;font-weight:600;display:none"></span>
+    </div>
+    <div class="products-grid" id="products-grid">
+      <div class="skel skel-card"></div>
+      <div class="skel skel-card"></div>
+      <div class="skel skel-card"></div>
+      <div class="skel skel-card"></div>
+    </div>
+    <div id="no-products" style="display:none"></div>
+
+    <div class="sec-title" style="margin-top:28px">آراء العملاء</div>
+  </div>
+
+  <!-- Comments -->
+  <div class="home-comments">
+    <div class="comment-form-card">
+      <textarea class="comment-textarea" id="homeCommentText" rows="3" placeholder="شاركنا رأيك..."></textarea>
+      <button class="btn-post-comment" onclick="submitHomeComment()">
+        <i class="fas fa-paper-plane" style="margin-left:5px"></i>نشر التعليق
+      </button>
+    </div>
+    <div id="home-comments-list">
+      <div class="skel" style="height:72px;margin-bottom:10px"></div>
+      <div class="skel" style="height:72px;margin-bottom:10px"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="site-footer">
+    <div class="footer-brand">
+      <h3>Pr7 Store</h3>
+      <p>متجر فلوس GTA الموثوق</p>
+    </div>
+    <div class="footer-social">
+      <a class="footer-slink" href="mailto:support@pr7store.com"><i class="fas fa-envelope"></i>إيميل</a>
+      <a class="footer-slink" href="https://twitter.com/PR7Store" target="_blank"><i class="fab fa-x-twitter"></i>X (تويتر)</a>
+      <a class="footer-slink" href="https://tiktok.com/@PR7Store" target="_blank"><i class="fab fa-tiktok"></i>تيك توك</a>
+      <a class="footer-slink" href="https://wa.me/966500000000" target="_blank"><i class="fab fa-whatsapp"></i>واتساب</a>
+    </div>
+    <p class="footer-note">التسليم يتم مباشرة داخل اللعبة عبر واتساب — لا يوجد شحن أو توصيل فعلي</p>
+    <p class="footer-copy">© Pr7 Store 2026 — جميع الحقوق محفوظة</p>
+  </div>
+</div>
+
+<!-- ════════════ PRODUCT DETAIL ════════════ -->
+<div id="page-product" class="page" style="background:#fff">
+  <button class="detail-back" onclick="nav('home')">
+    <i class="fas fa-arrow-right"></i> الرئيسية
+  </button>
+  <div id="product-detail-img-wrap" class="detail-img">
+    <img id="detail-main-img" src="" alt="">
+  </div>
+  <div class="detail-body">
+    <div id="detail-cat" class="detail-cat"></div>
+    <div id="detail-name" class="detail-name"></div>
+    <div id="detail-price" class="detail-price"></div>
+    <div id="detail-desc" class="detail-desc"></div>
+    <div id="detail-stock" class="detail-stock"></div>
+    <div class="qty-row">
+      <span class="qty-label">الكمية</span>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="changeQty(-1)"><i class="fas fa-minus"></i></button>
+        <span class="qty-val" id="detail-qty">1</span>
+        <button class="qty-btn" onclick="changeQty(1)"><i class="fas fa-plus"></i></button>
+      </div>
+    </div>
+    <button class="btn-add-cart-full" onclick="addFromDetail()">
+      <i class="fas fa-shopping-bag"></i> إضافة للسلة
+    </button>
+  </div>
+
+  <!-- Product Reviews -->
+  <div class="reviews-section">
+    <div class="sec-title" style="margin-top:0">التقييمات</div>
+    <div class="review-form">
+      <div class="star-picker" id="star-picker">
+        <i class="far fa-star" onclick="setRating(1)"></i>
+        <i class="far fa-star" onclick="setRating(2)"></i>
+        <i class="far fa-star" onclick="setRating(3)"></i>
+        <i class="far fa-star" onclick="setRating(4)"></i>
+        <i class="far fa-star" onclick="setRating(5)"></i>
+      </div>
+      <textarea class="review-textarea" id="productCommentText" rows="3" placeholder="اكتب تقييمك..."></textarea>
+      <button class="btn-post-review" onclick="submitProductComment()">
+        <i class="fas fa-paper-plane" style="margin-left:5px"></i>نشر التقييم
+      </button>
+    </div>
+    <div id="product-comments-list"></div>
+  </div>
+
+  <div class="site-footer">
+    <div class="footer-brand"><h3>Pr7 Store</h3><p>متجر فلوس GTA الموثوق</p></div>
+    <div class="footer-social">
+      <a class="footer-slink" href="mailto:support@pr7store.com"><i class="fas fa-envelope"></i>إيميل</a>
+      <a class="footer-slink" href="https://twitter.com/PR7Store" target="_blank"><i class="fab fa-x-twitter"></i>X</a>
+      <a class="footer-slink" href="https://tiktok.com/@PR7Store" target="_blank"><i class="fab fa-tiktok"></i>تيك توك</a>
+      <a class="footer-slink" href="https://wa.me/966500000000" target="_blank"><i class="fab fa-whatsapp"></i>واتساب</a>
+    </div>
+    <p class="footer-copy">© Pr7 Store 2026 — جميع الحقوق محفوظة</p>
+  </div>
+</div>
+
+<!-- ════════════ CART ════════════ -->
+<div id="page-cart" class="page">
+  <div class="cart-wrap">
+    <div class="sec-title" style="margin-top:16px"><i class="fas fa-shopping-bag" style="font-size:.9rem"></i>سلة التسوق</div>
+    <div id="cart-items-list"></div>
+    <div id="cart-summary"></div>
+  </div>
+</div>
+
+<!-- ════════════ ACCOUNT ════════════ -->
+<div id="page-account" class="page">
+  <div id="account-content" class="account-inner"></div>
+  <div class="site-footer">
+    <div class="footer-brand"><h3>Pr7 Store</h3><p>متجر فلوس GTA الموثوق</p></div>
+    <div class="footer-social">
+      <a class="footer-slink" href="mailto:support@pr7store.com"><i class="fas fa-envelope"></i>إيميل</a>
+      <a class="footer-slink" href="https://twitter.com/PR7Store" target="_blank"><i class="fab fa-x-twitter"></i>X (تويتر)</a>
+      <a class="footer-slink" href="https://tiktok.com/@PR7Store" target="_blank"><i class="fab fa-tiktok"></i>تيك توك</a>
+      <a class="footer-slink" href="https://wa.me/966500000000" target="_blank"><i class="fab fa-whatsapp"></i>واتساب</a>
+    </div>
+    <p class="footer-note">التسليم يتم مباشرة داخل اللعبة عبر واتساب — لا يوجد شحن أو توصيل فعلي</p>
+    <p class="footer-copy">© Pr7 Store 2026 — جميع الحقوق محفوظة</p>
+  </div>
+</div>
+
+<!-- ════════════ SETTINGS ════════════ -->
+<div id="page-settings" class="page">
+  <div class="settings-wrap">
+    <div class="settings-section-title">معلومات المتجر</div>
+    <div class="settings-card">
+      <div class="settings-row"><span class="settings-row-label">اسم المتجر</span><span class="settings-row-val">Pr7 Store</span></div>
+      <div class="settings-row"><span class="settings-row-label">نوع المتجر</span><span class="settings-row-val">بيع فلوس الألعاب</span></div>
+      <div class="settings-row"><span class="settings-row-label">الدعم</span><span class="settings-row-val">واتساب</span></div>
+    </div>
+    <div class="settings-section-title">التواصل</div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <span class="settings-row-label"><i class="fab fa-whatsapp" style="margin-left:7px;color:#25D366"></i>واتساب</span>
+        <a href="https://wa.me/966500000000" target="_blank" style="font-size:.82rem;color:#25D366;font-weight:700">تواصل</a>
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label"><i class="fab fa-x-twitter" style="margin-left:7px"></i>تويتر</span>
+        <a href="https://twitter.com/PR7Store" target="_blank" style="font-size:.82rem;color:var(--gray-500);font-weight:700">متابعة</a>
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label"><i class="fab fa-tiktok" style="margin-left:7px"></i>تيك توك</span>
+        <a href="https://tiktok.com/@PR7Store" target="_blank" style="font-size:.82rem;color:var(--gray-500);font-weight:700">متابعة</a>
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label"><i class="fas fa-envelope" style="margin-left:7px"></i>البريد</span>
+        <span class="settings-row-val">support@pr7store.com</span>
+      </div>
+    </div>
+    <div class="settings-section-title">الحساب</div>
+    <div class="settings-card">
+      <div class="settings-row"><span class="settings-row-label">الحالة</span><span class="settings-row-val" id="sett-status">—</span></div>
+      <div class="settings-row"><span class="settings-row-label">البريد الإلكتروني</span><span class="settings-row-val" id="sett-email">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ ADMIN ════════════ -->
+<div id="page-admin" class="page">
+  <div class="admin-wrap">
+    <div class="sec-title" style="margin-top:16px"><i class="fas fa-shield-alt" style="font-size:.9rem"></i>لوحة الإدارة</div>
+    <div class="admin-tabs">
+      <button class="atab active" onclick="adminTab('add-prod',0)">إضافة منتج</button>
+      <button class="atab" onclick="adminTab('prod-list',1)">المنتجات</button>
+      <button class="atab" onclick="adminTab('coupons',2)">الكوبونات</button>
+      <button class="atab" onclick="adminTab('orders',3)">الطلبات</button>
+    </div>
+
+    <!-- Add product -->
+    <div class="admin-panel active" id="ap-add-prod">
+      <div class="form-card">
+        <h3>إضافة منتج جديد</h3>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">اسم المنتج</label><input class="form-input" id="p-name" placeholder="GTA Online 5M$"></div>
+          <div class="form-group"><label class="form-label">السعر (ريال)</label><input class="form-input" type="number" id="p-price" placeholder="50"></div>
+        </div>
+        <div class="form-group"><label class="form-label">الوصف</label><textarea class="form-textarea" id="p-desc" rows="3" placeholder="وصف المنتج..."></textarea></div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">القسم</label><select class="form-select" id="p-cat"><option value="GTA">GTA Online</option><option value="General">عام</option><option value="Other">أخرى</option></select></div>
+          <div class="form-group"><label class="form-label">الكمية</label><input class="form-input" type="number" id="p-qty" placeholder="10"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">رابط الصورة</label><input class="form-input" id="p-img" placeholder="https://..."></div>
+          <div class="form-group"><label class="form-label">الحالة</label><select class="form-select" id="p-status"><option value="active">متاح</option><option value="inactive">غير متاح</option></select></div>
+        </div>
+        <button class="btn-add-item" onclick="adminAddProduct()"><i class="fas fa-plus"></i>إضافة المنتج</button>
+      </div>
+    </div>
+
+    <!-- Products list -->
+    <div class="admin-panel" id="ap-prod-list">
+      <div class="data-table-wrap">
+        <table><thead><tr><th>الصورة</th><th>الاسم</th><th>السعر</th><th>القسم</th><th>الكمية</th><th>الحالة</th><th>إجراء</th></tr></thead>
+        <tbody id="admin-prods-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Coupons -->
+    <div class="admin-panel" id="ap-coupons">
+      <div class="form-card" style="margin-bottom:14px">
+        <h3>إضافة كوبون خصم</h3>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">الكوبون</label><input class="form-input" id="c-code" placeholder="SALE20" style="text-transform:uppercase"></div>
+          <div class="form-group"><label class="form-label">نسبة الخصم %</label><input class="form-input" type="number" id="c-disc" placeholder="20"></div>
+        </div>
+        <div class="form-group"><label class="form-label">تاريخ الانتهاء</label><input class="form-input" type="date" id="c-expiry"></div>
+        <button class="btn-add-item" onclick="adminAddCoupon()"><i class="fas fa-tag"></i>إضافة الكوبون</button>
+      </div>
+      <div class="data-table-wrap">
+        <table><thead><tr><th>الكوبون</th><th>الخصم</th><th>الانتهاء</th><th>حذف</th></tr></thead>
+        <tbody id="coupons-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="admin-panel" id="ap-orders">
+      <div class="data-table-wrap" style="overflow:auto">
+        <table style="min-width:680px"><thead><tr><th>الطلب</th><th>العميل</th><th>المنتجات</th><th>الإجمالي</th><th>الفاتورة</th><th>الحالة</th><th>تعديل</th></tr></thead>
+        <tbody id="orders-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+  <button class="bnav-item active" onclick="nav('home')" id="bnav-home">
+    <i class="fas fa-home"></i><span>الرئيسية</span>
+  </button>
+  <button class="bnav-item" onclick="nav('cart')" id="bnav-cart">
+    <i class="fas fa-shopping-bag"></i><span>السلة</span>
+  </button>
+  <button class="bnav-item" onclick="nav('account')" id="bnav-account">
+    <i class="fas fa-user"></i><span>الحساب</span>
+  </button>
+  <button class="bnav-item" onclick="nav('settings')" id="bnav-settings">
+    <i class="fas fa-cog"></i><span>الإعدادات</span>
+  </button>
+  <button class="bnav-item" onclick="nav('admin')" id="bnav-admin" style="display:none">
+    <i class="fas fa-shield-alt"></i><span>الإدارة</span>
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div id="toast-wrap"></div>
+
+<!-- INVOICE MODAL -->
+<div class="modal-overlay" id="modal-invoice">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">تم إنشاء الطلب</div>
+      <button class="modal-close-btn" onclick="closeModal('modal-invoice')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="invoice-success-icon"><i class="fas fa-check-circle"></i></div>
+    <p style="text-align:center;color:#555;font-size:.9rem;margin-bottom:4px">يرجى إرسال رقم الفاتورة إلى واتساب المتجر وسيتم التواصل معك لإكمال عملية الدفع.</p>
+    <div class="invoice-box">
+      <div class="inv-label">رقم الفاتورة</div>
+      <div class="inv-val" id="inv-id-display"></div>
+      <div class="inv-sep"></div>
+      <div class="inv-label">رقم الطلب</div>
+      <div class="inv-val" id="ord-id-display"></div>
+    </div>
+    <button class="btn-wa" onclick="openWA()">
+      <i class="fab fa-whatsapp"></i>إرسال عبر واتساب
+    </button>
+  </div>
+</div>
+
+<!-- EDIT PRODUCT MODAL -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">تعديل المنتج</div>
+      <button class="modal-close-btn" onclick="closeModal('modal-edit')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="edit-form">
+      <input type="hidden" id="edit-id">
+      <div class="form-group"><label class="form-label">الاسم</label><input class="form-input" id="edit-name"></div>
+      <div class="form-group"><label class="form-label">السعر</label><input class="form-input" type="number" id="edit-price"></div>
+      <div class="form-group"><label class="form-label">الوصف</label><textarea class="form-textarea" id="edit-desc" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">الكمية</label><input class="form-input" type="number" id="edit-qty"></div>
+      <div class="form-group"><label class="form-label">رابط الصورة</label><input class="form-input" id="edit-img"></div>
+      <div class="form-group"><label class="form-label">الحالة</label><select class="form-select" id="edit-status"><option value="active">متاح</option><option value="inactive">غير متاح</option></select></div>
+      <button class="btn-form-submit" onclick="saveEdit()"><i class="fas fa-save" style="margin-left:6px"></i>حفظ التعديلات</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider,
+         createUserWithEmailAndPassword, signInWithEmailAndPassword,
+         signOut, updateProfile }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc,
+         query, orderBy, where, serverTimestamp, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── FIREBASE CONFIG ──────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "pr7store-f134f.firebaseapp.com",
+  projectId: "pr7store-f134f",
+  storageBucket: "pr7store-f134f.firebasestorage.app",
+  messagingSenderId: "894492814543",
+  appId: "1:894492814543:web:da3d455cf4e1a561c61bba",
+  measurementId: "G-GQ7F3QCKHD"
+};
+
+const ADMIN_EMAIL = "medobytox@gmail.com";
+const WA_NUMBER  = "966500000000";
+
+const fb  = initializeApp(firebaseConfig);
+const auth = getAuth(fb);
+const db   = getFirestore(fb);
+const gp   = new GoogleAuthProvider();
+
+// ── STATE ────────────────────────────────────────────────────────
+let user        = null;
+let allProducts = [];
+let cart        = JSON.parse(localStorage.getItem('pr7cart') || '[]');
+let coupon      = null;
+let rating      = 0;
+let currentPid  = null;
+let invId = '', ordId = '';
+
+// ── HELPERS ──────────────────────────────────────────────────────
+window.toast = function(msg, type='') {
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+};
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+
+function fmt(n) { return Number(n).toLocaleString('ar-SA'); }
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('ar-SA', {year:'numeric', month:'short', day:'numeric'});
+}
+function genInvId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = 'PR7';
+  for (let i=0;i<21;i++) id += chars[Math.floor(Math.random()*chars.length)];
+  return id;
+}
+function genOrdId() { return '#' + Math.floor(10000 + Math.random()*90000); }
+
+// ── NAVIGATION ───────────────────────────────────────────────────
+window.nav = function(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const pg = document.getElementById('page-' + page);
+  const bn = document.getElementById('bnav-' + page);
+  if (pg) pg.classList.add('active');
+  if (bn) bn.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+
+  const tb = document.getElementById('topbar-title');
+  const sw = document.getElementById('topbar-search-wrap');
+  const titles = { home:'Pr7 Store', cart:'السلة', account:'حسابي', settings:'الإعدادات', admin:'الإدارة', product:'' };
+  tb.textContent = titles[page] || 'Pr7 Store';
+  sw.style.display = page === 'home' ? 'flex' : 'none';
+
+  if (page === 'cart')    renderCart();
+  if (page === 'account') renderAccount();
+  if (page === 'admin')   { loadAdminProds(); loadAdminOrders(); loadAdminCoupons(); }
+  if (page === 'settings') updateSettingsUI();
+};
+
+// ── AUTH ─────────────────────────────────────────────────────────
+onAuthStateChanged(auth, u => {
+  user = u;
+  renderAccount();
+  updateSettingsUI();
+  const adminNav = document.getElementById('bnav-admin');
+  adminNav.style.display = (u && u.email === ADMIN_EMAIL) ? 'flex' : 'none';
+});
+
+function renderAccount() {
+  const cont = document.getElementById('account-content');
+  if (!cont) return;
+  if (user) {
+    const name    = user.displayName || user.email.split('@')[0];
+    const initial = name[0].toUpperCase();
+    const isAdmin = user.email === ADMIN_EMAIL;
+    cont.innerHTML = `
+      <div class="profile-card">
+        <div class="profile-avatar-lg">${initial}</div>
+        <div class="profile-name">${name}</div>
+        <div class="profile-email">${user.email}</div>
+        ${isAdmin ? '<div class="admin-badge"><i class="fas fa-shield-alt"></i>مدير المتجر</div>' : ''}
+        <div class="profile-menu" style="width:100%;max-width:380px;margin-top:16px">
+          <div class="profile-menu-item"><span><i class="fas fa-shopping-bag" style="margin-left:8px;color:#aaa"></i>طلباتي</span><i class="fas fa-chevron-left" style="font-size:.7rem"></i></div>
+          <div class="profile-menu-item"><span><i class="fas fa-heart" style="margin-left:8px;color:#aaa"></i>المفضلة</span><i class="fas fa-chevron-left" style="font-size:.7rem"></i></div>
+          ${isAdmin ? `<div class="profile-menu-item" onclick="nav('admin')" style="cursor:pointer"><span><i class="fas fa-shield-alt" style="margin-left:8px;color:#aaa"></i>لوحة الإدارة</span><i class="fas fa-chevron-left" style="font-size:.7rem"></i></div>` : ''}
+        </div>
+        <button class="btn-signout" onclick="doSignOut()"><i class="fas fa-sign-out-alt"></i>تسجيل الخروج</button>
+      </div>`;
+  } else {
+    renderAuthUI(cont, 'guest');
+  }
+}
+
+function renderAuthUI(cont, mode) {
+  if (mode === 'guest') {
+    cont.innerHTML = `
+      <div class="guest-hero">
+        <div class="guest-icon"><i class="fas fa-user"></i></div>
+        <div class="guest-title">مرحباً بك في Pr7 Store</div>
+        <div class="guest-sub">سجّل دخولك لمتابعة طلباتك والاستفادة من العروض</div>
+        <button class="btn-auth-main" onclick="renderAuthUI(document.getElementById('account-content'),'login')">
+          <i class="fas fa-sign-in-alt"></i>تسجيل الدخول / إنشاء حساب
+        </button>
+      </div>`;
+    return;
+  }
+  if (mode === 'login') {
+    cont.innerHTML = `
+      <div class="auth-sheet">
+        <div class="auth-sheet-title">تسجيل الدخول</div>
+        <div class="auth-form">
+          <button class="btn-google-auth" onclick="doGoogle()">
+            <i class="fab fa-google" style="color:#ea4335"></i>الدخول بواسطة Google
+          </button>
+          <div class="auth-divider"><span>أو</span></div>
+          <div class="form-group"><label class="form-label">البريد الإلكتروني</label>
+            <input class="form-input" type="email" id="li-email" placeholder="example@email.com"></div>
+          <div class="form-group"><label class="form-label">كلمة المرور</label>
+            <input class="form-input" type="password" id="li-pass" placeholder="••••••••"></div>
+          <button class="btn-form-submit" onclick="doLogin()">تسجيل الدخول</button>
+          <p class="auth-switch">ليس لديك حساب؟ <a onclick="renderAuthUI(document.getElementById('account-content'),'register')">إنشاء حساب</a></p>
+          <p class="auth-switch"><a onclick="renderAuthUI(document.getElementById('account-content'),'guest')" style="color:#aaa">رجوع</a></p>
+        </div>
+      </div>`;
+    return;
+  }
+  cont.innerHTML = `
+    <div class="auth-sheet">
+      <div class="auth-sheet-title">إنشاء حساب</div>
+      <div class="auth-form">
+        <button class="btn-google-auth" onclick="doGoogle()">
+          <i class="fab fa-google" style="color:#ea4335"></i>التسجيل بواسطة Google
+        </button>
+        <div class="auth-divider"><span>أو</span></div>
+        <div class="form-group"><label class="form-label">الاسم</label><input class="form-input" id="rg-name" placeholder="اسمك"></div>
+        <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input class="form-input" type="email" id="rg-email" placeholder="example@email.com"></div>
+        <div class="form-group"><label class="form-label">كلمة المرور</label><input class="form-input" type="password" id="rg-pass" placeholder="6 أحرف أو أكثر"></div>
+        <button class="btn-form-submit" onclick="doRegister()">إنشاء الحساب</button>
+        <p class="auth-switch">لديك حساب؟ <a onclick="renderAuthUI(document.getElementById('account-content'),'login')">تسجيل الدخول</a></p>
+      </div>
+    </div>`;
+}
+
+window.doGoogle   = async () => { try { await signInWithPopup(auth,gp); toast('تم تسجيل الدخول','ok'); } catch(e) { toast(e.message,'err'); }};
+window.doLogin    = async () => {
+  const e=document.getElementById('li-email')?.value, p=document.getElementById('li-pass')?.value;
+  if(!e||!p) return toast('يرجى تعبئة جميع الحقول','err');
+  try { await signInWithEmailAndPassword(auth,e,p); toast('أهلاً بعودتك','ok'); } catch(ex){toast(ex.message,'err');}
+};
+window.doRegister = async () => {
+  const n=document.getElementById('rg-name')?.value?.trim(),
+        e=document.getElementById('rg-email')?.value,
+        p=document.getElementById('rg-pass')?.value;
+  if(!n||!e||!p) return toast('يرجى تعبئة جميع الحقول','err');
+  try { const c=await createUserWithEmailAndPassword(auth,e,p); await updateProfile(c.user,{displayName:n}); toast('تم إنشاء الحساب','ok'); } catch(ex){toast(ex.message,'err');}
+};
+window.doSignOut  = async () => { await signOut(auth); toast('تم تسجيل الخروج'); };
+
+function updateSettingsUI() {
+  const st = document.getElementById('sett-status');
+  const em = document.getElementById('sett-email');
+  if(st) st.textContent = user ? 'مسجل الدخول' : 'غير مسجل';
+  if(em) em.textContent = user ? user.email : '—';
+}
+
+// ── PRODUCTS ─────────────────────────────────────────────────────
+async function loadProducts() {
+  try {
+    const snap = await getDocs(query(collection(db,'products'), orderBy('createdAt','desc')));
+    allProducts = [];
+    snap.forEach(d => allProducts.push({id:d.id,...d.data()}));
+    renderProducts(allProducts);
+  } catch(e) {
+    document.getElementById('products-grid').innerHTML = '';
+    document.getElementById('no-products').style.display = 'block';
+    document.getElementById('no-products').innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-wifi-slash"></i></div><p>تعذّر تحميل المنتجات.<br>تأكد من إعدادات Firebase.</p></div>`;
+  }
+}
+
+function renderProducts(list) {
+  const grid = document.getElementById('products-grid');
+  const noP  = document.getElementById('no-products');
+  const sc   = document.getElementById('search-count');
+  const active = list.filter(p => p.status !== 'inactive');
+  if (active.length === 0) {
+    grid.innerHTML = '';
+    noP.style.display = 'block';
+    noP.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-box-open"></i></div><p>لا توجد منتجات متاحة</p></div>`;
+    sc.style.display = 'none';
+    return;
+  }
+  noP.style.display = 'none';
+  const q = document.getElementById('searchInput').value.trim();
+  sc.style.display = q ? 'block' : 'none';
+  sc.textContent = q ? `${active.length} نتيجة` : '';
+  grid.innerHTML = active.map(p => `
+    <div class="product-card" onclick="openProduct('${p.id}')">
+      <div class="product-img-wrap">
+        <img src="${p.image||'https://via.placeholder.com/400/f0f0f0/ccc?text=Pr7'}"
+             alt="${p.name}" onerror="this.src='https://via.placeholder.com/400/f0f0f0/ccc?text=Pr7'">
+        ${p.category?`<span class="prod-cat-badge">${p.category}</span>`:''}
+      </div>
+      <div class="product-body">
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${(p.description||'').substring(0,70)}${(p.description||'').length>70?'...':''}</div>
+        <div class="product-price">${fmt(p.price)} <small>ريال</small></div>
+        <div class="product-footer">
+          <button class="btn-view" onclick="event.stopPropagation();openProduct('${p.id}')">عرض التفاصيل</button>
+          <button class="btn-cart-sm" onclick="event.stopPropagation();addToCart('${p.id}')"><i class="fas fa-plus"></i></button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+window.handleSearch = function() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  if (!q) { renderProducts(allProducts); return; }
+  renderProducts(allProducts.filter(p =>
+    (p.name||'').toLowerCase().includes(q) ||
+    (p.description||'').toLowerCase().includes(q) ||
+    (p.category||'').toLowerCase().includes(q)
+  ));
+};
+
+// ── PRODUCT DETAIL ───────────────────────────────────────────────
+window.openProduct = function(id) {
+  currentPid = id;
+  rating = 0;
+  updateStars(0);
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('detail-main-img').src = p.image || 'https://via.placeholder.com/600/f0f0f0/ccc?text=Pr7';
+  document.getElementById('detail-main-img').onerror = function(){ this.src='https://via.placeholder.com/600/f0f0f0/ccc?text=Pr7'; };
+  document.getElementById('detail-cat').textContent   = p.category || '';
+  document.getElementById('detail-cat').style.display = p.category ? '' : 'none';
+  document.getElementById('detail-name').textContent  = p.name;
+  document.getElementById('detail-price').innerHTML   = `${fmt(p.price)} <small>ريال سعودي</small>`;
+  document.getElementById('detail-desc').textContent  = p.description || 'لا يوجد وصف';
+  const stk = document.getElementById('detail-stock');
+  if (p.quantity !== undefined) { stk.innerHTML=`<i class="fas fa-box"></i>الكمية المتاحة: ${p.quantity}`; stk.style.display='flex'; }
+  else { stk.style.display='none'; }
+  document.getElementById('detail-qty').textContent = '1';
+  document.getElementById('productCommentText').value = '';
+  loadProductComments(id);
+  nav('product');
+};
+
+window.changeQty = function(d) {
+  const el = document.getElementById('detail-qty');
+  let v = parseInt(el.textContent) + d;
+  if (v < 1) v = 1;
+  el.textContent = v;
+};
+
+window.addFromDetail = function() {
+  if (!currentPid) return;
+  const qty = parseInt(document.getElementById('detail-qty').textContent || '1');
+  const p   = allProducts.find(x => x.id === currentPid);
+  if (!p) return;
+  const ex = cart.find(c => c.id === currentPid);
+  if (ex) ex.qty += qty; else cart.push({id:currentPid, name:p.name, price:p.price, image:p.image, qty});
+  saveCart();
+  toast('تمت الإضافة للسلة','ok');
+};
+
+// ── CART ─────────────────────────────────────────────────────────
+window.addToCart = function(id) {
+  const p = allProducts.find(x => x.id === id);
+  if (!p) return;
+  const ex = cart.find(c => c.id === id);
+  if (ex) ex.qty++; else cart.push({id, name:p.name, price:p.price, image:p.image, qty:1});
+  saveCart();
+  toast('تمت الإضافة','ok');
+};
+
+function saveCart() { localStorage.setItem('pr7cart', JSON.stringify(cart)); updateBadge(); }
+
+function updateBadge() {
+  const total = cart.reduce((s,c) => s+c.qty, 0);
+  const b = document.getElementById('cart-badge');
+  b.textContent = total;
+  b.style.display = total > 0 ? 'flex' : 'none';
+}
+
+function renderCart() {
+  const list = document.getElementById('cart-items-list');
+  const sum  = document.getElementById('cart-summary');
+  if (cart.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding:60px 20px"><div class="empty-icon"><i class="fas fa-shopping-bag"></i></div><p>سلتك فارغة</p><button class="btn-view" style="margin-top:8px;padding:11px 28px;border-radius:28px" onclick="nav('home')">تسوّق الآن</button></div>`;
+    sum.innerHTML = '';
+    return;
+  }
+  list.innerHTML = cart.map((item,i) => `
+    <div class="cart-item-card">
+      <img class="ci-img" src="${item.image||'https://via.placeholder.com/70/f0f0f0/ccc?text=P'}"
+           onerror="this.src='https://via.placeholder.com/70/f0f0f0/ccc?text=P'" alt="${item.name}">
+      <div class="ci-info">
+        <div class="ci-name">${item.name}</div>
+        <div class="ci-price">${fmt(item.price)} ريال × ${item.qty} = ${fmt(item.price*item.qty)} ريال</div>
+      </div>
+      <div class="ci-controls">
+        <button class="ci-qty-btn" onclick="cartQty(${i},-1)"><i class="fas fa-minus"></i></button>
+        <span class="ci-qty-val">${item.qty}</span>
+        <button class="ci-qty-btn" onclick="cartQty(${i},1)"><i class="fas fa-plus"></i></button>
+        <button class="ci-remove" onclick="cartRm(${i})"><i class="fas fa-trash-alt"></i></button>
+      </div>
+    </div>`).join('');
+
+  const subtotal = cart.reduce((s,c) => s+c.price*c.qty, 0);
+  const disc     = coupon ? subtotal * coupon.discount/100 : 0;
+  const total    = subtotal - disc;
+  sum.innerHTML = `
+    <div class="order-box">
+      <div class="order-box-title">ملخص الطلب</div>
+      <div class="sum-row"><span>المجموع</span><span>${fmt(subtotal)} ريال</span></div>
+      ${coupon?`<div class="sum-row" style="color:#16a34a"><span>خصم (${coupon.discount}%)</span><span>− ${fmt(disc)} ريال</span></div>`:''}
+      <div class="sum-row total"><span>الإجمالي</span><span>${fmt(total)} ريال</span></div>
+      <div class="coupon-row">
+        <input class="coupon-field" id="coupon-field" placeholder="كوبون الخصم" value="${coupon?coupon.code:''}">
+        <button class="coupon-apply" onclick="applyCoupon()"><i class="fas fa-tag"></i></button>
+      </div>
+      <div class="coupon-ok ${coupon?'show':''}" id="coupon-ok"><i class="fas fa-check-circle"></i> تم تطبيق خصم ${coupon?.discount||0}%</div>
+      <button class="btn-checkout-full" onclick="checkout()"><i class="fas fa-lock"></i>إتمام الطلب</button>
+    </div>`;
+}
+
+window.cartQty = function(i,d) { cart[i].qty+=d; if(cart[i].qty<1) cart.splice(i,1); saveCart(); renderCart(); };
+window.cartRm  = function(i)   { cart.splice(i,1); saveCart(); renderCart(); };
+
+window.applyCoupon = async function() {
+  const code = document.getElementById('coupon-field')?.value?.trim().toUpperCase();
+  if (!code) return toast('يرجى إدخال الكوبون','err');
+  try {
+    const snap = await getDocs(query(collection(db,'coupons'), where('code','==',code)));
+    if (snap.empty) return toast('كوبون غير صالح','err');
+    const c = snap.docs[0].data();
+    if (c.expiry && new Date(c.expiry) < new Date()) return toast('انتهت صلاحية الكوبون','err');
+    coupon = {code, discount: c.discount};
+    toast(`تم تطبيق خصم ${c.discount}%`,'ok');
+    renderCart();
+  } catch(e) { toast('خطأ في التحقق','err'); }
+};
+
+window.checkout = async function() {
+  if (!user) { toast('يرجى تسجيل الدخول أولاً','err'); nav('account'); return; }
+  if (cart.length === 0) return toast('السلة فارغة','err');
+  const subtotal = cart.reduce((s,c)=>s+c.price*c.qty, 0);
+  const disc     = coupon ? subtotal*coupon.discount/100 : 0;
+  const total    = subtotal - disc;
+  invId = genInvId();
+  ordId = genOrdId();
+  try {
+    await addDoc(collection(db,'orders'), {
+      userId: user.uid,
+      userName: user.displayName || user.email.split('@')[0],
+      userEmail: user.email,
+      items: cart, subtotal, discount: disc, total,
+      coupon: coupon?.code || null,
+      invoiceId: invId, orderId: ordId,
+      status: 'new', createdAt: serverTimestamp()
+    });
+    document.getElementById('inv-id-display').textContent = invId;
+    document.getElementById('ord-id-display').textContent = ordId;
+    openModal('modal-invoice');
+    cart = []; coupon = null; saveCart();
+  } catch(e) { toast('خطأ في إنشاء الطلب: ' + e.message,'err'); }
+};
+
+window.openWA = function() {
+  const msg = encodeURIComponent(`مرحباً، أريد إتمام الدفع.\n\nرقم الفاتورة: ${invId}\nرقم الطلب: ${ordId}`);
+  window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`, '_blank');
+};
+
+// ── REVIEWS / COMMENTS ───────────────────────────────────────────
+window.setRating = function(v) { rating = v; updateStars(v); };
+function updateStars(v) {
+  document.querySelectorAll('#star-picker i').forEach((s,i) => {
+    s.className = i < v ? 'fas fa-star lit' : 'far fa-star';
+  });
+}
+
+async function loadProductComments(pid) {
+  const list = document.getElementById('product-comments-list');
+  try {
+    const snap = await getDocs(query(collection(db,'product_reviews'), where('productId','==',pid), orderBy('createdAt','desc')));
+    if (snap.empty) { list.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px;font-size:.87rem">لا توجد تقييمات بعد</p>'; return; }
+    list.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      const init = (c.userName||'م')[0].toUpperCase();
+      const stars = Array.from({length:5},(_,i)=>`<i class="${i<(c.rating||0)?'fas':'far'} fa-star ${i<(c.rating||0)?'':'empty'}"></i>`).join('');
+      return `
+        <div class="review-item">
+          <div class="rev-avatar">${init}</div>
+          <div class="rev-body">
+            <div class="rev-meta">
+              <span class="rev-name">${c.userName||'مستخدم'}</span>
+              <div class="rev-stars">${stars}</div>
+              <span class="rev-date">${fmtDate(c.createdAt)}</span>
+            </div>
+            <div class="rev-text">${c.text}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) { list.innerHTML='<p style="color:#aaa;text-align:center;padding:20px;font-size:.87rem">تعذّر تحميل التقييمات</p>'; }
+}
+
+window.submitProductComment = async function() {
+  if (!user) return toast('يرجى تسجيل الدخول أولاً','err');
+  const text = document.getElementById('productCommentText').value.trim();
+  if (!text) return toast('اكتب تعليقك','err');
+  if (!rating) return toast('يرجى اختيار تقييم','err');
+  try {
+    await addDoc(collection(db,'product_reviews'), {
+      productId: currentPid, userId: user.uid,
+      userName: user.displayName || user.email.split('@')[0],
+      rating, text, createdAt: serverTimestamp()
+    });
+    document.getElementById('productCommentText').value = '';
+    rating = 0; updateStars(0);
+    toast('تم نشر تقييمك','ok');
+    loadProductComments(currentPid);
+  } catch(e) { toast('خطأ: '+e.message,'err'); }
+};
+
+async function loadHomeComments() {
+  const list = document.getElementById('home-comments-list');
+  try {
+    const snap = await getDocs(query(collection(db,'comments'), orderBy('createdAt','desc')));
+    if (snap.empty) { list.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px;font-size:.87rem">لا توجد تعليقات بعد. كن أول من يعلّق!</p>'; return; }
+    list.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      const init = (c.userName||'م')[0].toUpperCase();
+      return `
+        <div class="comment-card">
+          <div class="comment-avatar">${init}</div>
+          <div class="comment-body-wrap">
+            <div class="comment-meta">
+              <span class="comment-author">${c.userName||'مستخدم'}</span>
+              <span class="comment-date">${fmtDate(c.createdAt)}</span>
+            </div>
+            <div class="comment-text">${c.text}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) { list.innerHTML='<p style="color:#aaa;text-align:center;padding:20px;font-size:.87rem">تعذّر تحميل التعليقات</p>'; }
+}
+
+window.submitHomeComment = async function() {
+  if (!user) return toast('يرجى تسجيل الدخول أولاً','err');
+  const text = document.getElementById('homeCommentText').value.trim();
+  if (!text) return toast('اكتب تعليقك','err');
+  try {
+    await addDoc(collection(db,'comments'), {
+      userId: user.uid,
+      userName: user.displayName || user.email.split('@')[0],
+      text, createdAt: serverTimestamp()
+    });
+    document.getElementById('homeCommentText').value = '';
+    toast('تم نشر تعليقك','ok');
+    loadHomeComments();
+  } catch(e) { toast('خطأ: '+e.message,'err'); }
+};
+
+// ── ADMIN ─────────────────────────────────────────────────────────
+window.adminTab = function(id, idx) {
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('ap-'+id)?.classList.add('active');
+  document.querySelectorAll('.atab')[idx]?.classList.add('active');
+  if (id==='prod-list') loadAdminProds();
+  if (id==='coupons')   loadAdminCoupons();
+  if (id==='orders')    loadAdminOrders();
+};
+
+window.adminAddProduct = async function() {
+  const name  = document.getElementById('p-name').value.trim();
+  const price = parseFloat(document.getElementById('p-price').value);
+  const desc  = document.getElementById('p-desc').value.trim();
+  const cat   = document.getElementById('p-cat').value;
+  const qty   = parseInt(document.getElementById('p-qty').value)||0;
+  const img   = document.getElementById('p-img').value.trim();
+  const status= document.getElementById('p-status').value;
+  if (!name||!price) return toast('يرجى تعبئة الحقول المطلوبة','err');
+  try {
+    await addDoc(collection(db,'products'),{name,price,description:desc,category:cat,quantity:qty,image:img,status,createdAt:serverTimestamp()});
+    toast('تمت إضافة المنتج','ok');
+    ['p-name','p-price','p-desc','p-qty','p-img'].forEach(id=>{ document.getElementById(id).value=''; });
+    loadProducts();
+  } catch(e) { toast('خطأ: '+e.message,'err'); }
+};
+
+async function loadAdminProds() {
+  const tb = document.getElementById('admin-prods-tbody');
+  if(!tb) return;
+  tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">جاري التحميل...</td></tr>';
+  try {
+    const snap = await getDocs(query(collection(db,'products'), orderBy('createdAt','desc')));
+    if (snap.empty) { tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">لا توجد منتجات</td></tr>'; return; }
+    tb.innerHTML = snap.docs.map(d=>{
+      const p={id:d.id,...d.data()};
+      return `<tr>
+        <td><img class="tbl-img" src="${p.image||'https://via.placeholder.com/40/f0f0f0/ccc?text=P'}" onerror="this.src='https://via.placeholder.com/40/f0f0f0/ccc?text=P'"></td>
+        <td style="font-weight:700">${p.name}</td>
+        <td>${fmt(p.price)} ريال</td>
+        <td>${p.category||'—'}</td>
+        <td>${p.quantity??'—'}</td>
+        <td><span class="sbadge ${p.status==='active'?'sb-active':'sb-inactive'}">${p.status==='active'?'متاح':'غير متاح'}</span></td>
+        <td style="display:flex;gap:6px">
+          <button class="btn-tbl btn-edt" onclick="openEdit('${p.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn-tbl btn-del" onclick="delProduct('${p.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) { tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa">خطأ</td></tr>'; }
+}
+
+window.delProduct = async function(id) {
+  if(!confirm('حذف هذا المنتج نهائياً؟')) return;
+  try { await deleteDoc(doc(db,'products',id)); toast('تم الحذف','ok'); loadProducts(); loadAdminProds(); }
+  catch(e){toast('خطأ','err');}
+};
+
+window.openEdit = async function(id) {
+  try {
+    const d = await getDoc(doc(db,'products',id));
+    if(!d.exists()) return;
+    const p = d.data();
+    document.getElementById('edit-id').value    = id;
+    document.getElementById('edit-name').value  = p.name||'';
+    document.getElementById('edit-price').value = p.price||'';
+    document.getElementById('edit-desc').value  = p.description||'';
+    document.getElementById('edit-qty').value   = p.quantity||'';
+    document.getElementById('edit-img').value   = p.image||'';
+    document.getElementById('edit-status').value= p.status||'active';
+    openModal('modal-edit');
+  } catch(e){toast('خطأ في التحميل','err');}
+};
+
+window.saveEdit = async function() {
+  const id = document.getElementById('edit-id').value;
+  try {
+    await updateDoc(doc(db,'products',id),{
+      name:document.getElementById('edit-name').value,
+      price:parseFloat(document.getElementById('edit-price').value),
+      description:document.getElementById('edit-desc').value,
+      quantity:parseInt(document.getElementById('edit-qty').value)||0,
+      image:document.getElementById('edit-img').value,
+      status:document.getElementById('edit-status').value
+    });
+    toast('تم حفظ التعديلات','ok');
+    closeModal('modal-edit');
+    loadProducts(); loadAdminProds();
+  } catch(e){toast('خطأ','err');}
+};
+
+window.adminAddCoupon = async function() {
+  const code = document.getElementById('c-code').value.trim().toUpperCase();
+  const disc = parseFloat(document.getElementById('c-disc').value);
+  const exp  = document.getElementById('c-expiry').value;
+  if (!code||!disc) return toast('يرجى تعبئة الحقول','err');
+  try {
+    await addDoc(collection(db,'coupons'),{code,discount:disc,expiry:exp||null,createdAt:serverTimestamp()});
+    toast('تمت إضافة الكوبون','ok');
+    document.getElementById('c-code').value='';
+    document.getElementById('c-disc').value='';
+    document.getElementById('c-expiry').value='';
+    loadAdminCoupons();
+  } catch(e){toast('خطأ: '+e.message,'err');}
+};
+
+async function loadAdminCoupons() {
+  const tb = document.getElementById('coupons-tbody');
+  if(!tb) return;
+  try {
+    const snap = await getDocs(query(collection(db,'coupons'), orderBy('createdAt','desc')));
+    if(snap.empty){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#aaa;padding:14px">لا توجد كوبونات</td></tr>';return;}
+    tb.innerHTML = snap.docs.map(d=>{
+      const c={id:d.id,...d.data()};
+      const exp = c.expiry && new Date(c.expiry)<new Date();
+      return `<tr>
+        <td style="font-weight:800;font-family:monospace">${c.code}</td>
+        <td>${c.discount}%</td>
+        <td>${c.expiry?new Date(c.expiry).toLocaleDateString('ar-SA'):'—'} ${exp?'<span class="sbadge sb-cancelled">منتهي</span>':''}</td>
+        <td><button class="btn-tbl btn-del" onclick="delCoupon('${c.id}')"><i class="fas fa-trash"></i></button></td>
+      </tr>`;
+    }).join('');
+  } catch(e){}
+}
+
+window.delCoupon = async function(id) {
+  if(!confirm('حذف الكوبون؟')) return;
+  try { await deleteDoc(doc(db,'coupons',id)); toast('تم الحذف','ok'); loadAdminCoupons(); }
+  catch(e){toast('خطأ','err');}
+};
+
+async function loadAdminOrders() {
+  const tb = document.getElementById('orders-tbody');
+  if(!tb) return;
+  tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">جاري التحميل...</td></tr>';
+  try {
+    const snap = await getDocs(query(collection(db,'orders'), orderBy('createdAt','desc')));
+    if(snap.empty){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa;padding:16px">لا توجد طلبات</td></tr>';return;}
+    const sm = {new:'sb-new',pending:'sb-pending',paid:'sb-paid',completed:'sb-completed',cancelled:'sb-cancelled'};
+    const sl = {new:'جديد',pending:'بانتظار الدفع',paid:'مدفوع',completed:'مكتمل',cancelled:'ملغي'};
+    tb.innerHTML = snap.docs.map(d=>{
+      const o={id:d.id,...d.data()};
+      const items = (o.items||[]).map(i=>`${i.name}(${i.qty})`).join('، ');
+      return `<tr>
+        <td style="font-weight:700">${o.orderId||'—'}</td>
+        <td>${o.userName||'—'}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${items}">${items}</td>
+        <td style="font-weight:700;white-space:nowrap">${fmt(o.total||0)} ريال</td>
+        <td style="font-family:monospace;font-size:.72rem">${o.invoiceId||'—'}</td>
+        <td><span class="sbadge ${sm[o.status]||'sb-new'}">${sl[o.status]||'جديد'}</span></td>
+        <td>
+          <select style="border:1.5px solid #e5e5e5;border-radius:6px;padding:4px 8px;font-size:.75rem;font-family:Cairo,sans-serif" onchange="updateOrder('${o.id}',this.value)">
+            ${Object.entries(sl).map(([v,l])=>`<option value="${v}" ${o.status===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#aaa">خطأ</td></tr>';}
+}
+
+window.updateOrder = async function(id, status) {
+  try { await updateDoc(doc(db,'orders',id),{status}); toast('تم تحديث الحالة','ok'); }
+  catch(e){toast('خطأ','err');}
+};
+
+// ── INIT ──────────────────────────────────────────────────────────
+(async function init() {
+  updateBadge();
+  nav('home');
+  await Promise.all([loadProducts(), loadHomeComments()]);
+  document.getElementById('loader').style.opacity = '0';
+  setTimeout(()=>{ document.getElementById('loader').style.display='none'; }, 380);
+})();
+</script>
+</body>
+</html>
